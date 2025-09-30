@@ -1,0 +1,20 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "typecheck": {
+      "cache": true,
+      "outputs": ["./tsconfig.tsbuildinfo"]
+    },
+    "build": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "outputs": ["./dist/**", "./.output", "./.next"]
+    },
+    "dev": {
+      "cache": false
+    },
+    "format": {
+      "cache": true
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "rivet-chat",
+  "private": true,
+  "type": "module",
+  "scripts": {},
+  "devDependencies": {
+    "@tsconfig/bun": "1.0.7",
+    "@effect/language-service": "0.41.1",
+    "prettier": "3.6.2",
+    "turbo": "2.5.8"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "packageManager": "bun@1.2.23",
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "typescript": "5.9.2",
+      "@types/node": "24.5.2"
+    }
+  }
+}
