@@ -1,15 +1,22 @@
 {
   "name": "cli",
-  "module": "index.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/index.ts"
+    "dev": "bun run --conditions=browser src/index.tsx"
+  },
+  "exports": {
+    "./*": "./src/*.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@opentui/core": "^0.1.25",
+    "@opentui/react": "^0.1.25",
+    "react": "^19.1.1"
   }
 }
