@@ -1,4 +1,8 @@
 import { TextAttributes } from "@opentui/core";
+import type { Session, User } from "better-auth";
+import { useEffect, useState } from "react";
+import { useLog } from "../hooks/useLog";
+import { authClient } from "../lib/auth";
 import { Theme } from "../theme";
 import type { KeyBinding } from "../types";
 
@@ -21,10 +25,7 @@ const getKeyBindings = (panel: string | null): KeyBinding[] => {
         ...common,
       ];
     case "sidebar":
-      return [
-        { key: "j/k", description: "navigate" },
-        ...common,
-      ];
+      return [{ key: "j/k", description: "navigate" }, ...common];
     case "input":
       return [
         { key: "enter", description: "send" },
@@ -38,6 +39,25 @@ const getKeyBindings = (panel: string | null): KeyBinding[] => {
 
 export const StatusBar = ({ focusedPanel }: StatusBarProps) => {
   const bindings = getKeyBindings(focusedPanel);
+  const { data } = authClient.useSession();
+  const [session, setSession] = useState<{
+    user: User;
+    session: Session;
+  } | null>(null);
+  const log = useLog();
+
+  useEffect(() => {
+    log.info("QUERY SESSION", data);
+  }, [data]);
+
+  useEffect(() => {
+    authClient.getSession().then((session) => {
+      log.info("FETCHED SESSION", session);
+      if (session.data) {
+        setSession(session.data);
+      }
+    });
+  }, []);
 
   return (
     <box
@@ -59,7 +79,12 @@ export const StatusBar = ({ focusedPanel }: StatusBarProps) => {
           </box>
         ))}
       </box>
-      <text fg={Theme.textMuted}>Rivet Chat</text>
+      <box flexDirection="row" gap={2}>
+        <text fg={Theme.textMuted}>
+          {session ? session.user.name : "Guest"}
+        </text>
+        <text fg={Theme.textMuted}>Rivet Chat</text>
+      </box>
     </box>
   );
 };

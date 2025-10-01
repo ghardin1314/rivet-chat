@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --conditions=browser src/index.tsx"
+    "dev": "bun run --watch --conditions=browser src/index.tsx"
   },
   "exports": {
     "./*": "./src/*.ts"

@@ -1,11 +1,11 @@
 import { betterAuth } from "better-auth";
-import { username } from "better-auth/plugins";
-import Database from "better-sqlite3";
+import { bearer, username } from "better-auth/plugins";
+import { Database } from "bun:sqlite";
 
 export const auth = betterAuth({
   database: new Database("./sqlite.db"),
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [username()],
+  plugins: [username(), bearer()],
 });
