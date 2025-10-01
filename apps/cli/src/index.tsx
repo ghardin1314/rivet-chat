@@ -1,6 +1,8 @@
 import { render } from "@opentui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ErrorBoundary } from "./components/error-boundary";
 import { clearLogs } from "./hooks/use-log";
+import { ChatProvider } from "./providers/chat-provider";
 import { FocusProvider } from "./providers/focus-provider";
 import { RouterProvider, useRouter } from "./providers/router-provider";
 import { HomeRoute } from "./routes/home";
@@ -33,13 +35,18 @@ const App = () => {
 await clearLogs();
 
 await render(
-  <QueryClientProvider client={queryClient}>
-    <RouterProvider>
-      <FocusProvider>
-        <App />
-      </FocusProvider>
-    </RouterProvider>
-  </QueryClientProvider>,
+  // @ts-expect-error - ErrorBoundary is not typed properly
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider>
+        <ChatProvider>
+          <FocusProvider>
+            <App />
+          </FocusProvider>
+        </ChatProvider>
+      </RouterProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>,
   {
     targetFps: 60,
     exitOnCtrlC: false,

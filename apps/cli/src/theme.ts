@@ -10,4 +10,5 @@ export const Theme = {
   success: "#22c55e",
   own: "#3b82f6",
   warning: "#f59e0b",
+  danger: "#ef4444",
 };

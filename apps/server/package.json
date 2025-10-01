@@ -16,6 +16,8 @@
     "typescript": "catalog:"
   },
   "dependencies": {
+    "@hono/node-server": "1.19.5",
+    "@hono/node-ws": "1.2.0",
     "@rivetchat/core": "workspace:*",
     "better-auth": "catalog:",
     "better-sqlite3": "^12.4.1",
