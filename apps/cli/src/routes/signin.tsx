@@ -6,6 +6,8 @@ import { authClient } from "../lib/auth";
 import { useRouter } from "../providers/router-provider";
 import { Theme } from "../theme";
 
+// TODO: Loading states, error states, etc.
+
 export const SignInRoute = () => {
   const dimensions = useTerminalDimensions();
   const { info, error } = useLog();
@@ -15,8 +17,13 @@ export const SignInRoute = () => {
   const [focused, setFocused] = useState<"username" | "password">("username");
 
   useKeyboard((key) => {
-    if (key.name === "q") {
+    info("Key pressed", key);
+    if (key.ctrl && key.name === "c") {
       process.exit(0);
+    }
+
+    if (key.name === "j" && key.meta) {
+      navigate("signup");
     }
 
     if (key.name === "tab") {
@@ -59,9 +66,20 @@ export const SignInRoute = () => {
       }}
     >
       <box
-        style={{ border: true, padding: 2, flexDirection: "column", gap: 1 }}
+        style={{
+          border: true,
+          padding: 2,
+          flexDirection: "column",
+          gap: 1,
+          alignItems: "center",
+        }}
       >
-        <text fg={Theme.primary}>Sign In</text>
+        <ascii-font
+          text="Rivet Chat"
+          font="block"
+          fg={RGBA.fromHex(Theme.primary)}
+        />
+        <text fg={Theme.textMuted}>Sign In</text>
 
         <box title="Username" style={{ border: true, width: 40, height: 3 }}>
           <input
@@ -81,7 +99,9 @@ export const SignInRoute = () => {
           />
         </box>
 
-        <text fg={Theme.textMuted}>Tab: Switch | Enter: Submit | Q: Quit</text>
+        <text fg={Theme.textMuted}>
+          Tab: Switch | Enter: Submit | Opt+J: Sign Up | Cmd+C: Quit
+        </text>
       </box>
     </box>
   );

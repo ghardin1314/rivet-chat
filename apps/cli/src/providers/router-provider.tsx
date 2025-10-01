@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-export type Route = "signin" | "signup" | "home";
+export type Route = "loading" | "signin" | "signup" | "home";
 
 interface RouterContextValue {
   currentRoute: Route;
@@ -10,7 +10,7 @@ interface RouterContextValue {
 const RouterContext = createContext<RouterContextValue | undefined>(undefined);
 
 export const RouterProvider = ({ children }: { children: ReactNode }) => {
-  const [currentRoute, setCurrentRoute] = useState<Route>("signin");
+  const [currentRoute, setCurrentRoute] = useState<Route>("loading");
 
   const navigate = (route: Route) => {
     setCurrentRoute(route);

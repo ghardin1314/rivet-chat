@@ -4,6 +4,7 @@ import { clearLogs } from "./hooks/use-log";
 import { FocusProvider } from "./providers/focus-provider";
 import { RouterProvider, useRouter } from "./providers/router-provider";
 import { HomeRoute } from "./routes/home";
+import { LoadingRoute } from "./routes/loading";
 import { SignInRoute } from "./routes/signin";
 import { SignUpRoute } from "./routes/signup";
 
@@ -14,6 +15,8 @@ const App = () => {
   const { currentRoute } = useRouter();
 
   switch (currentRoute) {
+    case "loading":
+      return <LoadingRoute />;
     case "home":
       return <HomeRoute />;
     case "signin":

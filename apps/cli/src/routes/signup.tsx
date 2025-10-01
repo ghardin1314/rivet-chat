@@ -6,6 +6,8 @@ import { authClient } from "../lib/auth";
 import { useRouter } from "../providers/router-provider";
 import { Theme } from "../theme";
 
+// TODO: Loading states, error states, etc.
+
 export const SignUpRoute = () => {
   const dimensions = useTerminalDimensions();
   const { navigate } = useRouter();
@@ -19,8 +21,12 @@ export const SignUpRoute = () => {
   );
 
   useKeyboard((key) => {
-    if (key.name === "q") {
+    if (key.ctrl && key.name === "c") {
       process.exit(0);
+    }
+
+    if (key.name === "j" && key.meta) {
+      navigate("signin");
     }
 
     if (key.name === "tab") {
@@ -67,9 +73,20 @@ export const SignUpRoute = () => {
       }}
     >
       <box
-        style={{ border: true, padding: 2, flexDirection: "column", gap: 1 }}
+        style={{
+          border: true,
+          padding: 2,
+          flexDirection: "column",
+          gap: 1,
+          alignItems: "center",
+        }}
       >
-        <text fg={Theme.primary}>Sign Up</text>
+        <ascii-font
+          text="Rivet Chat"
+          font="block"
+          fg={RGBA.fromHex(Theme.primary)}
+        />
+        <text fg={Theme.textMuted}>Sign Up</text>
 
         <box title="Username" style={{ border: true, width: 40, height: 3 }}>
           <input
@@ -98,7 +115,9 @@ export const SignUpRoute = () => {
           />
         </box>
 
-        <text fg={Theme.textMuted}>Tab: Switch | Enter: Submit | Q: Quit</text>
+        <text fg={Theme.textMuted}>
+          Tab: Switch | Enter: Submit | Opt+J: Sign In | Cmd+C: Quit
+        </text>
       </box>
     </box>
   );
