@@ -1,18 +1,20 @@
 import { InputRenderable, RGBA, ScrollBoxRenderable } from "@opentui/core";
 import { render, useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Message, Panel } from "./types";
+import { Header } from "./components/header";
+import { InputArea } from "./components/input-area";
+import { MessageList } from "./components/message-list";
+import { Sidebar } from "./components/sidebar";
+import { StatusBar } from "./components/status-bar";
+import { FocusProvider, useFocus } from "./providers/focus-provider";
 import { Theme } from "./theme";
-import { Header } from "./components/Header";
-import { MessageList } from "./components/MessageList";
-import { InputArea } from "./components/InputArea";
-import { StatusBar } from "./components/StatusBar";
-import { Sidebar } from "./components/Sidebar";
+import type { Message } from "./types";
 
 const MOCK_USERS = ["Alice", "Bob", "Charlie", "You"];
 
 const App = () => {
   const dimensions = useTerminalDimensions();
+  const { focusedPanel } = useFocus();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -43,9 +45,7 @@ const App = () => {
       isOwn: false,
     },
   ]);
-  const [inputValue, setInputValue] = useState("");
   const [activeUsers] = useState(["Alice", "Bob", "Charlie", "You"]);
-  const [focusedPanel, setFocusedPanel] = useState<Panel>("messages");
   const inputRef = useRef<InputRenderable>(null);
   const scrollRef = useRef<ScrollBoxRenderable>(null);
 
@@ -66,81 +66,54 @@ const App = () => {
     }, 0);
   }, [messages]);
 
-  const handleSubmit = useCallback(() => {
-    if (!inputValue.trim()) return;
+  const handleSubmit = useCallback((content: string) => {
+    if (!content.trim()) return;
 
     const newMessage: Message = {
       id: Date.now().toString(),
       sender: "You",
-      content: inputValue,
+      content,
       timestamp: new Date(),
       isOwn: true,
     };
 
     setMessages((prev) => [...prev, newMessage]);
-    setInputValue("");
 
     // Simulate a response after 1-2 seconds
-    setTimeout(() => {
-      const responders = MOCK_USERS.filter((u) => u !== "You");
-      const randomResponder = responders[Math.floor(Math.random() * responders.length)];
-      const responses = [
-        "That's interesting!",
-        "I agree with that",
-        "Makes sense to me",
-        "Good point!",
-        "Thanks for sharing!",
-        "Absolutely!",
-        "I was just thinking the same thing",
-      ];
+    setTimeout(
+      () => {
+        const responders = MOCK_USERS.filter((u) => u !== "You");
+        const randomResponder =
+          responders[Math.floor(Math.random() * responders.length)];
+        const responses = [
+          "That's interesting!",
+          "I agree with that",
+          "Makes sense to me",
+          "Good point!",
+          "Thanks for sharing!",
+          "Absolutely!",
+          "I was just thinking the same thing",
+        ];
 
-      const responseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: randomResponder,
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date(),
-        isOwn: false,
-      };
+        const responseMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          sender: randomResponder,
+          content: responses[Math.floor(Math.random() * responses.length)],
+          timestamp: new Date(),
+          isOwn: false,
+        };
 
-      setMessages((prev) => [...prev, responseMessage]);
-    }, 1000 + Math.random() * 1000);
-  }, [inputValue]);
+        setMessages((prev) => [...prev, responseMessage]);
+      },
+      1000 + Math.random() * 1000
+    );
+  }, []);
 
   const handleKeyboard = useCallback(
     (evt: any) => {
       // Quit
       if (evt.name === "q" && focusedPanel !== "input") {
         process.exit(0);
-      }
-
-      // Panel navigation with Tab/Shift+Tab
-      if (evt.name === "tab") {
-        if (evt.shift) {
-          // Previous panel
-          setFocusedPanel((prev) => {
-            if (prev === "messages") return "input";
-            if (prev === "sidebar") return "messages";
-            return "sidebar";
-          });
-        } else {
-          // Next panel
-          setFocusedPanel((prev) => {
-            if (prev === "messages") return "sidebar";
-            if (prev === "sidebar") return "input";
-            return "messages";
-          });
-        }
-      }
-
-      // Enter insert mode from messages panel
-      if (evt.name === "i" && focusedPanel === "messages") {
-        setFocusedPanel("input");
-      }
-
-      // Exit input mode
-      if (evt.name === "escape" && focusedPanel === "input") {
-        setInputValue("");
-        setFocusedPanel("messages");
       }
 
       // Vim-style navigation in messages panel
@@ -171,22 +144,12 @@ const App = () => {
       <box flexGrow={1} flexDirection="row">
         {/* Main Chat */}
         <box flexGrow={1} flexDirection="column">
-          <MessageList
-            messages={messages}
-            scrollRef={scrollRef}
-            isFocused={focusedPanel === "messages"}
-          />
+          <MessageList messages={messages} scrollRef={scrollRef} />
 
-          <InputArea
-            inputRef={inputRef}
-            value={inputValue}
-            onInput={setInputValue}
-            onSubmit={handleSubmit}
-            isFocused={focusedPanel === "input"}
-          />
+          <InputArea inputRef={inputRef} onSubmit={handleSubmit} />
         </box>
 
-        <Sidebar activeUsers={activeUsers} isFocused={focusedPanel === "sidebar"} />
+        <Sidebar activeUsers={activeUsers} />
       </box>
 
       <StatusBar focusedPanel={focusedPanel} />
@@ -194,8 +157,13 @@ const App = () => {
   );
 };
 
-await render(<App />, {
-  targetFps: 60,
-  exitOnCtrlC: false,
-  useKittyKeyboard: true,
-});
+await render(
+  <FocusProvider>
+    <App />
+  </FocusProvider>,
+  {
+    targetFps: 60,
+    exitOnCtrlC: false,
+    useKittyKeyboard: true,
+  }
+);
