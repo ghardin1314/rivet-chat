@@ -1,5 +1,8 @@
+import { auth, registry } from "@rivetchat/core";
 import { Hono } from "hono";
-import { auth } from "./auth";
+
+// Start Rivet with file system driver (for development)
+const { client } = registry.start();
 
 const app = new Hono();
 app.get("/", (c) => c.text("Hello Bun!"));
