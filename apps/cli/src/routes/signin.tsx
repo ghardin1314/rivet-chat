@@ -1,20 +1,45 @@
 import { RGBA } from "@opentui/core";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
+import { useMutation } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { PasswordInput } from "../components/password-input";
 import { useLog } from "../hooks/use-log";
 import { authClient } from "../lib/auth";
 import { useRouter } from "../providers/router-provider";
 import { Theme } from "../theme";
 
-// TODO: Loading states, error states, etc.
-
 export const SignInRoute = () => {
   const dimensions = useTerminalDimensions();
-  const { info, error } = useLog();
+  const { info } = useLog();
   const { navigate } = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [focused, setFocused] = useState<"username" | "password">("username");
+
+  const signInMutation = useMutation({
+    mutationFn: async ({
+      username,
+      password,
+    }: {
+      username: string;
+      password: string;
+    }) => {
+      const response = await authClient.signIn.username({
+        username,
+        password,
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      return response.data;
+    },
+    onSuccess: (data) => {
+      info("Signin successful", data);
+      navigate("home");
+    },
+  });
 
   useKeyboard((key) => {
     info("Key pressed", key);
@@ -26,33 +51,18 @@ export const SignInRoute = () => {
       navigate("signup");
     }
 
-    if (key.name === "tab") {
+    info("Key pressed", key);
+
+    if (key.name === "tab" || key.name === "up" || key.name === "down") {
       setFocused((prev) => (prev === "username" ? "password" : "username"));
     }
   });
 
-  const handleSubmit = useCallback(async () => {
-    if (!username.trim() || !password.trim()) return;
-
-    try {
-      const response = await authClient.signIn.username({
-        username,
-        password,
-      });
-
-      if (response.error) {
-        error("Signin failed", response.error);
-        return;
-      }
-
-      info("Signin successful", response);
-      navigate("home");
-    } catch (err) {
-      error("Signin failed", err);
-    }
-
-    navigate("home");
-  }, [username, password, navigate, info, error]);
+  const handleSubmit = useCallback(() => {
+    if (!username.trim() || !password.trim() || signInMutation.isPending)
+      return;
+    signInMutation.mutate({ username, password });
+  }, [username, password, signInMutation]);
 
   return (
     <box
@@ -79,23 +89,51 @@ export const SignInRoute = () => {
           font="block"
           fg={RGBA.fromHex(Theme.primary)}
         />
-        <text fg={Theme.textMuted}>Sign In</text>
+        <box style={{ minHeight: 1 }}>
+          {signInMutation.isPending ? (
+            <text fg={Theme.primary}>Signing in...</text>
+          ) : signInMutation.isError ? (
+            <text fg={Theme.warning}>
+              {signInMutation.error?.message || "Sign in failed"}
+            </text>
+          ) : (
+            <text fg={Theme.textMuted}>Sign In</text>
+          )}
+        </box>
 
-        <box title="Username" style={{ border: true, width: 40, height: 3 }}>
+        <box
+          onMouseDown={() => setFocused("username")}
+          title="Username"
+          style={{
+            border: true,
+            width: 40,
+            height: 3,
+            borderColor: signInMutation.isPending ? Theme.textMuted : undefined,
+          }}
+        >
           <input
             placeholder="Enter username..."
             onInput={setUsername}
             onSubmit={handleSubmit}
-            focused={focused === "username"}
+            focused={focused === "username" && !signInMutation.isPending}
           />
         </box>
 
-        <box title="Password" style={{ border: true, width: 40, height: 3 }}>
-          <input
+        <box
+          onMouseDown={() => setFocused("password")}
+          title="Password"
+          style={{
+            border: true,
+            width: 40,
+            height: 3,
+            borderColor: signInMutation.isPending ? Theme.textMuted : undefined,
+          }}
+        >
+          <PasswordInput
             placeholder="Enter password..."
             onInput={setPassword}
             onSubmit={handleSubmit}
-            focused={focused === "password"}
+            focused={focused === "password" && !signInMutation.isPending}
           />
         </box>
 

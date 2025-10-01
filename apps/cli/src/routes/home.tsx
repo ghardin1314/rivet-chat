@@ -1,11 +1,20 @@
-import { InputRenderable, RGBA, ScrollBoxRenderable } from "@opentui/core";
+import {
+  InputRenderable,
+  RGBA,
+  ScrollBoxRenderable,
+  type ParsedKey,
+} from "@opentui/core";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ConfirmationDialog } from "../components/confirmation-dialog";
 import { InputArea } from "../components/input-area";
 import { MessageList } from "../components/message-list";
 import { Sidebar } from "../components/sidebar";
 import { StatusBar } from "../components/status-bar";
+import { authClient } from "../lib/auth";
+import { clearAuthToken } from "../lib/credentials";
 import { useFocus } from "../providers/focus-provider";
+import { useRouter } from "../providers/router-provider";
 import { Theme } from "../theme";
 import type { Message } from "../types";
 
@@ -14,6 +23,8 @@ const MOCK_USERS = ["Alice", "Bob", "Charlie", "You"];
 export const HomeRoute = () => {
   const dimensions = useTerminalDimensions();
   const { focusedSlug } = useFocus();
+  const { navigate } = useRouter();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -110,8 +121,24 @@ export const HomeRoute = () => {
     );
   }, [inputValue]);
 
+  const handleLogout = useCallback(async () => {
+    try {
+      await authClient.signOut();
+    } catch (error) {
+      // Ignore signOut errors, just clear locally
+    }
+    await clearAuthToken();
+    navigate("signin");
+  }, [navigate]);
+
   const handleKeyboard = useCallback(
-    (evt: any) => {
+    (evt: ParsedKey) => {
+      // Logout
+      if (evt.ctrl && evt.name === "l") {
+        setShowLogoutDialog(true);
+        return;
+      }
+
       // Quit
       if (evt.name === "q" && focusedSlug !== "input") {
         process.exit(0);
@@ -158,6 +185,17 @@ export const HomeRoute = () => {
       </box>
 
       <StatusBar focusedPanel={focusedSlug} />
+
+      {showLogoutDialog && (
+        <ConfirmationDialog
+          title="Logout"
+          message="Are you sure you want to logout?"
+          confirmText="Logout"
+          cancelText="Cancel"
+          onConfirm={handleLogout}
+          onClose={() => setShowLogoutDialog(false)}
+        />
+      )}
     </box>
   );
 };

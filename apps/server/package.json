@@ -18,6 +18,7 @@
   "dependencies": {
     "better-auth": "catalog:",
     "better-sqlite3": "^12.4.1",
-    "hono": "4.9.9"
+    "hono": "4.9.9",
+    "rivetkit": "catalog:"
   }
 }
