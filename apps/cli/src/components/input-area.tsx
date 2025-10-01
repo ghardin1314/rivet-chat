@@ -1,19 +1,21 @@
-import { InputRenderable, RGBA, TextAttributes } from "@opentui/core";
+import { InputRenderable, RGBA } from "@opentui/core";
 import { useCallback } from "react";
 import { useKeyboard } from "@opentui/react";
+import { useFocus } from "../providers/focus-provider";
 import { Theme } from "../theme";
-import { useExitPrompt, ExitPromptStatus } from "./ExitPrompt";
+import { useExitPrompt } from "./exit-prompt";
+import { Section } from "./section";
 
 interface InputAreaProps {
   inputRef: React.RefObject<InputRenderable | null>;
   value: string;
   onInput: (value: string) => void;
   onSubmit: () => void;
-  isFocused: boolean;
 }
 
-export const InputArea = ({ inputRef, value, onInput, onSubmit, isFocused }: InputAreaProps) => {
-  const { handleCtrlC, showExitPrompt } = useExitPrompt(
+export const InputArea = ({ inputRef, value, onInput, onSubmit }: InputAreaProps) => {
+  const { isFocused } = useFocus();
+  const { handleCtrlC } = useExitPrompt(
     () => process.exit(0),
     () => onInput("")
   );
@@ -21,7 +23,7 @@ export const InputArea = ({ inputRef, value, onInput, onSubmit, isFocused }: Inp
   // Handle Ctrl+C only when this panel is focused
   const handleKeyboard = useCallback(
     (evt: any) => {
-      if (evt.ctrl && evt.name === "c" && isFocused) {
+      if (evt.ctrl && evt.name === "c" && isFocused("input")) {
         handleCtrlC();
       }
     },
@@ -31,31 +33,11 @@ export const InputArea = ({ inputRef, value, onInput, onSubmit, isFocused }: Inp
   useKeyboard(handleKeyboard);
 
   return (
-    <box
-      flexDirection="column"
-      flexShrink={0}
-      borderColor={RGBA.fromHex(isFocused ? Theme.borderFocused : Theme.border)}
-    >
-      <box
-        height={1}
-        paddingLeft={1}
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <text
-          fg={isFocused ? Theme.primary : Theme.textMuted}
-          attributes={isFocused ? TextAttributes.BOLD : TextAttributes.DIM}
-        >
-          Input
-        </text>
-        <ExitPromptStatus show={showExitPrompt} />
-      </box>
+    <Section title="Input" focusIndex={2} focusSlug="input" flexShrink={0}>
       <box
         flexShrink={0}
         paddingLeft={2}
         paddingRight={2}
-        paddingTop={1}
         paddingBottom={1}
       >
         <input
@@ -68,6 +50,6 @@ export const InputArea = ({ inputRef, value, onInput, onSubmit, isFocused }: Inp
           focusedTextColor={RGBA.fromHex(Theme.text)}
         />
       </box>
-    </box>
+    </Section>
   );
 };

@@ -1,12 +1,12 @@
-import { RGBA, TextAttributes } from "@opentui/core";
+import { TextAttributes } from "@opentui/core";
 import { Theme } from "../theme";
-import { KeyBinding, Panel } from "../types";
+import type { KeyBinding } from "../types";
 
 interface StatusBarProps {
-  focusedPanel: Panel;
+  focusedPanel: string | null;
 }
 
-const getKeyBindings = (panel: Panel): KeyBinding[] => {
+const getKeyBindings = (panel: string | null): KeyBinding[] => {
   const common: KeyBinding[] = [
     { key: "tab", description: "next panel" },
     { key: "shift+tab", description: "prev panel" },
@@ -46,16 +46,20 @@ export const StatusBar = ({ focusedPanel }: StatusBarProps) => {
       paddingLeft={1}
       paddingRight={1}
       flexDirection="row"
+      justifyContent="space-between"
       gap={2}
     >
-      {bindings.map((binding, idx) => (
-        <box key={idx} flexDirection="row" gap={1}>
-          <text fg={Theme.primary} attributes={TextAttributes.BOLD}>
-            {binding.key}
-          </text>
-          <text fg={Theme.textMuted}>{binding.description}</text>
-        </box>
-      ))}
+      <box flexDirection="row" gap={2}>
+        {bindings.map((binding, idx) => (
+          <box key={idx} flexDirection="row" gap={1}>
+            <text fg={Theme.primary} attributes={TextAttributes.BOLD}>
+              {binding.key}
+            </text>
+            <text fg={Theme.textMuted}>{binding.description}</text>
+          </box>
+        ))}
+      </box>
+      <text fg={Theme.textMuted}>Rivet Chat</text>
     </box>
   );
 };

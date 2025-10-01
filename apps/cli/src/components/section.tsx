@@ -1,10 +1,13 @@
 import { RGBA, TextAttributes } from "@opentui/core";
 import type { ReactNode } from "react";
+import { useEffect } from "react";
+import { useFocus } from "../providers/focus-provider";
 import { Theme } from "../theme";
 
 interface SectionProps {
   title: string;
-  isFocused: boolean;
+  focusIndex: number;
+  focusSlug: string;
   children: ReactNode;
   width?: number;
   flexGrow?: number;
@@ -13,12 +16,22 @@ interface SectionProps {
 
 export const Section = ({
   title,
-  isFocused,
+  focusIndex,
+  focusSlug,
   children,
   width,
   flexGrow,
   flexShrink,
 }: SectionProps) => {
+  const { registerSection, unregisterSection, isFocused } = useFocus();
+
+  useEffect(() => {
+    registerSection({ focusIndex, focusSlug });
+    return () => unregisterSection(focusSlug);
+  }, [focusIndex, focusSlug, registerSection, unregisterSection]);
+
+  const focused = isFocused(focusSlug);
+
   return (
     <box
       width={width}
@@ -27,18 +40,32 @@ export const Section = ({
       flexDirection="column"
       position="relative"
       border
-      borderColor={RGBA.fromHex(isFocused ? Theme.borderFocused : Theme.border)}
+      borderColor={RGBA.fromHex(focused ? Theme.borderFocused : Theme.border)}
       borderStyle="rounded"
     >
-      <box flexDirection="row" flexShrink={0} top={-1} left={1} zIndex={1}>
+      <box
+        flexDirection="row"
+        flexShrink={0}
+        top={-1}
+        left={1}
+        zIndex={1}
+        gap={1}
+      >
         <text
           flexShrink={0}
-          fg={isFocused ? Theme.primary : Theme.textMuted}
+          fg={focused ? Theme.primary : Theme.textMuted}
           attributes={TextAttributes.BOLD}
           bg={RGBA.fromHex(Theme.background)}
         >
-          {" "}
-          {title}{" "}
+          [{focusIndex}]
+        </text>
+        <text
+          flexShrink={0}
+          fg={focused ? Theme.primary : Theme.textMuted}
+          attributes={TextAttributes.BOLD}
+          bg={RGBA.fromHex(Theme.background)}
+        >
+          {title}
         </text>
       </box>
       {children}

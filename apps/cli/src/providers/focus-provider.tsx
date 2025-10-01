@@ -1,10 +1,23 @@
 import { useKeyboard } from "@opentui/react";
-import { createContext, useCallback, useContext, useState } from "react";
-import type { Panel } from "../types";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+} from "react";
+
+type FocusableSection = {
+  focusIndex: number;
+  focusSlug: string;
+};
 
 type FocusContextType = {
-  focusedPanel: Panel;
-  setFocusedPanel: (panel: Panel | ((prev: Panel) => Panel)) => void;
+  focusedSlug: string | null;
+  setFocusedSlug: (slug: string) => void;
+  registerSection: (section: FocusableSection) => void;
+  unregisterSection: (slug: string) => void;
+  isFocused: (slug: string) => boolean;
 };
 
 const FocusContext = createContext<FocusContextType | undefined>(undefined);
@@ -18,46 +31,88 @@ export const useFocus = () => {
 };
 
 export const FocusProvider = ({ children }: { children: React.ReactNode }) => {
-  const [focusedPanel, setFocusedPanel] = useState<Panel>("messages");
+  const [focusedSlug, setFocusedSlug] = useState<string | null>("messages");
+  const sectionsRef = useRef<Map<string, FocusableSection>>(new Map());
+
+  const registerSection = useCallback((section: FocusableSection) => {
+    sectionsRef.current.set(section.focusSlug, section);
+  }, []);
+
+  const unregisterSection = useCallback((slug: string) => {
+    sectionsRef.current.delete(slug);
+  }, []);
+
+  const isFocused = useCallback(
+    (slug: string) => focusedSlug === slug,
+    [focusedSlug]
+  );
 
   const handleKeyboard = useCallback(
     (evt: any) => {
       // Panel navigation with Tab/Shift+Tab
       if (evt.name === "tab") {
+        const sortedSections = Array.from(sectionsRef.current.values()).sort(
+          (a, b) => a.focusIndex - b.focusIndex
+        );
+
+        if (sortedSections.length === 0) return;
+
+        const currentIndex = sortedSections.findIndex(
+          (s) => s.focusSlug === focusedSlug
+        );
+
         if (evt.shift) {
-          // Previous panel
-          setFocusedPanel((prev) => {
-            if (prev === "messages") return "input";
-            if (prev === "sidebar") return "messages";
-            return "sidebar";
-          });
+          // Previous section
+          const nextIndex =
+            currentIndex <= 0 ? sortedSections.length - 1 : currentIndex - 1;
+          setFocusedSlug(sortedSections[nextIndex].focusSlug);
         } else {
-          // Next panel
-          setFocusedPanel((prev) => {
-            if (prev === "messages") return "sidebar";
-            if (prev === "sidebar") return "input";
-            return "messages";
-          });
+          // Next section
+          const nextIndex = (currentIndex + 1) % sortedSections.length;
+          setFocusedSlug(sortedSections[nextIndex].focusSlug);
+        }
+      }
+
+      // Numeric focus (0-9) - skip if in input mode
+      if (
+        evt.name &&
+        evt.name.match(/^[0-9]$/) &&
+        focusedSlug !== "input"
+      ) {
+        const targetIndex = parseInt(evt.name, 10);
+        const section = Array.from(sectionsRef.current.values()).find(
+          (s) => s.focusIndex === targetIndex
+        );
+        if (section) {
+          setFocusedSlug(section.focusSlug);
         }
       }
 
       // Enter insert mode from messages panel
-      if (evt.name === "i" && focusedPanel === "messages") {
-        setFocusedPanel("input");
+      if (evt.name === "i" && focusedSlug === "messages") {
+        setFocusedSlug("input");
       }
 
       // Exit input mode
-      if (evt.name === "escape" && focusedPanel === "input") {
-        setFocusedPanel("messages");
+      if (evt.name === "escape" && focusedSlug === "input") {
+        setFocusedSlug("messages");
       }
     },
-    [focusedPanel]
+    [focusedSlug]
   );
 
   useKeyboard(handleKeyboard);
 
   return (
-    <FocusContext.Provider value={{ focusedPanel, setFocusedPanel }}>
+    <FocusContext.Provider
+      value={{
+        focusedSlug,
+        setFocusedSlug,
+        registerSection,
+        unregisterSection,
+        isFocused,
+      }}
+    >
       {children}
     </FocusContext.Provider>
   );

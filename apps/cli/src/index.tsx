@@ -1,7 +1,6 @@
 import { InputRenderable, RGBA, ScrollBoxRenderable } from "@opentui/core";
 import { render, useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Header } from "./components/header";
 import { InputArea } from "./components/input-area";
 import { MessageList } from "./components/message-list";
 import { Sidebar } from "./components/sidebar";
@@ -14,7 +13,7 @@ const MOCK_USERS = ["Alice", "Bob", "Charlie", "You"];
 
 const App = () => {
   const dimensions = useTerminalDimensions();
-  const { focusedPanel } = useFocus();
+  const { focusedSlug } = useFocus();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -46,16 +45,17 @@ const App = () => {
     },
   ]);
   const [activeUsers] = useState(["Alice", "Bob", "Charlie", "You"]);
+  const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<InputRenderable>(null);
   const scrollRef = useRef<ScrollBoxRenderable>(null);
 
   useEffect(() => {
-    if (focusedPanel === "input" && inputRef.current) {
+    if (focusedSlug === "input" && inputRef.current) {
       inputRef.current.focus();
     } else if (inputRef.current) {
       inputRef.current.blur();
     }
-  }, [focusedPanel]);
+  }, [focusedSlug]);
 
   useEffect(() => {
     // Defer scroll to allow layout to update
@@ -66,18 +66,19 @@ const App = () => {
     }, 0);
   }, [messages]);
 
-  const handleSubmit = useCallback((content: string) => {
-    if (!content.trim()) return;
+  const handleSubmit = useCallback(() => {
+    if (!inputValue.trim()) return;
 
     const newMessage: Message = {
       id: Date.now().toString(),
       sender: "You",
-      content,
+      content: inputValue,
       timestamp: new Date(),
       isOwn: true,
     };
 
     setMessages((prev) => [...prev, newMessage]);
+    setInputValue("");
 
     // Simulate a response after 1-2 seconds
     setTimeout(
@@ -107,17 +108,17 @@ const App = () => {
       },
       1000 + Math.random() * 1000
     );
-  }, []);
+  }, [inputValue]);
 
   const handleKeyboard = useCallback(
     (evt: any) => {
       // Quit
-      if (evt.name === "q" && focusedPanel !== "input") {
+      if (evt.name === "q" && focusedSlug !== "input") {
         process.exit(0);
       }
 
       // Vim-style navigation in messages panel
-      if (focusedPanel === "messages") {
+      if (focusedSlug === "messages") {
         if (evt.name === "j") {
           scrollRef.current?.scrollBy(3);
         } else if (evt.name === "k") {
@@ -125,7 +126,7 @@ const App = () => {
         }
       }
     },
-    [focusedPanel]
+    [focusedSlug]
   );
 
   useKeyboard(handleKeyboard);
@@ -138,21 +139,24 @@ const App = () => {
       flexDirection="column"
       paddingBottom={1}
     >
-      <Header activeUsersCount={activeUsers.length} />
-
       {/* Messages Area */}
       <box flexGrow={1} flexDirection="row">
         {/* Main Chat */}
         <box flexGrow={1} flexDirection="column">
           <MessageList messages={messages} scrollRef={scrollRef} />
 
-          <InputArea inputRef={inputRef} onSubmit={handleSubmit} />
+          <InputArea
+            inputRef={inputRef}
+            value={inputValue}
+            onInput={setInputValue}
+            onSubmit={handleSubmit}
+          />
         </box>
 
         <Sidebar activeUsers={activeUsers} />
       </box>
 
-      <StatusBar focusedPanel={focusedPanel} />
+      <StatusBar focusedPanel={focusedSlug} />
     </box>
   );
 };

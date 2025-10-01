@@ -1,32 +1,19 @@
-import { RGBA, TextAttributes } from "@opentui/core";
 import { Theme } from "../theme";
+import { Section } from "./section";
 
 interface SidebarProps {
   activeUsers: string[];
-  isFocused: boolean;
 }
 
-export const Sidebar = ({ activeUsers, isFocused }: SidebarProps) => {
+export const Sidebar = ({ activeUsers }: SidebarProps) => {
   return (
-    <box
+    <Section
+      title={`Online (${activeUsers.length})`}
+      focusIndex={1}
+      focusSlug="sidebar"
       width={20}
-      borderColor={RGBA.fromHex(isFocused ? Theme.borderFocused : Theme.border)}
-      paddingLeft={1}
-      paddingRight={1}
-      flexDirection="column"
     >
-      <box
-        height={1}
-        paddingTop={1}
-      >
-        <text
-          fg={isFocused ? Theme.primary : Theme.textMuted}
-          attributes={TextAttributes.BOLD}
-        >
-          Online ({activeUsers.length})
-        </text>
-      </box>
-      <box paddingTop={1} paddingBottom={1} gap={1}>
+      <box paddingLeft={1} paddingRight={1} paddingBottom={1} gap={1}>
         {activeUsers.map((user) => (
           <box key={user} flexDirection="row" gap={1} alignItems="center">
             <text fg={Theme.success}>●</text>
@@ -34,6 +21,6 @@ export const Sidebar = ({ activeUsers, isFocused }: SidebarProps) => {
           </box>
         ))}
       </box>
-    </box>
+    </Section>
   );
 };
