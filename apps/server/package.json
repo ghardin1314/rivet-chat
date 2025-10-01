@@ -1,23 +1,23 @@
 {
-  "name": "cli",
+  "name": "@rivetchat/server",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --conditions=browser src/index.tsx"
+    "dev": "bun run src/index.ts"
   },
   "exports": {
     "./*": "./src/*.ts"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@opentui/core": "^0.1.25",
-    "@opentui/react": "^0.1.25",
     "better-auth": "catalog:",
-    "react": "^19.1.1"
+    "better-sqlite3": "^12.4.1",
+    "hono": "4.9.9"
   }
 }
