@@ -1,14 +1,13 @@
-import { InputRenderable, RGBA, ScrollBoxRenderable, TextAttributes } from "@opentui/core";
+import { InputRenderable, RGBA, ScrollBoxRenderable } from "@opentui/core";
 import { render, useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-interface Message {
-  id: string;
-  sender: string;
-  content: string;
-  timestamp: Date;
-  isOwn: boolean;
-}
+import { Message, Panel } from "./types";
+import { Theme } from "./theme";
+import { Header } from "./components/Header";
+import { MessageList } from "./components/MessageList";
+import { InputArea } from "./components/InputArea";
+import { StatusBar } from "./components/StatusBar";
+import { Sidebar } from "./components/Sidebar";
 
 const MOCK_USERS = ["Alice", "Bob", "Charlie", "You"];
 
@@ -46,16 +45,17 @@ const App = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [activeUsers] = useState(["Alice", "Bob", "Charlie", "You"]);
-  const [showExitPrompt, setShowExitPrompt] = useState(false);
+  const [focusedPanel, setFocusedPanel] = useState<Panel>("messages");
   const inputRef = useRef<InputRenderable>(null);
   const scrollRef = useRef<ScrollBoxRenderable>(null);
-  const lastCtrlCRef = useRef<number>(0);
 
   useEffect(() => {
-    if (inputRef.current) {
+    if (focusedPanel === "input" && inputRef.current) {
       inputRef.current.focus();
+    } else if (inputRef.current) {
+      inputRef.current.blur();
     }
-  }, []);
+  }, [focusedPanel]);
 
   useEffect(() => {
     // Defer scroll to allow layout to update
@@ -108,56 +108,54 @@ const App = () => {
 
   const handleKeyboard = useCallback(
     (evt: any) => {
-      if (evt.name === "escape") {
-        if (inputRef.current) {
-          inputRef.current.blur();
+      // Quit
+      if (evt.name === "q" && focusedPanel !== "input") {
+        process.exit(0);
+      }
+
+      // Panel navigation with Tab/Shift+Tab
+      if (evt.name === "tab") {
+        if (evt.shift) {
+          // Previous panel
+          setFocusedPanel((prev) => {
+            if (prev === "messages") return "input";
+            if (prev === "sidebar") return "messages";
+            return "sidebar";
+          });
+        } else {
+          // Next panel
+          setFocusedPanel((prev) => {
+            if (prev === "messages") return "sidebar";
+            if (prev === "sidebar") return "input";
+            return "messages";
+          });
         }
       }
 
-      // Handle Ctrl+C: first press clears input, second press exits
-      if (evt.ctrl && evt.name === "c") {
-        const now = Date.now();
-        const timeSinceLastPress = now - lastCtrlCRef.current;
+      // Enter insert mode from messages panel
+      if (evt.name === "i" && focusedPanel === "messages") {
+        setFocusedPanel("input");
+      }
 
-        if (timeSinceLastPress < 500) {
-          // Double press within 500ms - exit
-          process.exit(0);
-        } else {
-          // First press - clear input and show exit prompt
-          setInputValue("");
-          setShowExitPrompt(true);
-          lastCtrlCRef.current = now;
+      // Exit input mode
+      if (evt.name === "escape" && focusedPanel === "input") {
+        setInputValue("");
+        setFocusedPanel("messages");
+      }
 
-          // Clear exit prompt after 500ms
-          setTimeout(() => {
-            setShowExitPrompt(false);
-          }, 500);
+      // Vim-style navigation in messages panel
+      if (focusedPanel === "messages") {
+        if (evt.name === "j") {
+          scrollRef.current?.scrollBy(3);
+        } else if (evt.name === "k") {
+          scrollRef.current?.scrollBy(-3);
         }
       }
     },
-    []
+    [focusedPanel]
   );
 
   useKeyboard(handleKeyboard);
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const Theme = {
-    background: "#0a0a0a",
-    backgroundPanel: "#1a1a1a",
-    border: "#333333",
-    primary: "#6366f1",
-    accent: "#8b5cf6",
-    text: "#e5e5e5",
-    textMuted: "#a1a1a1",
-    success: "#22c55e",
-    own: "#3b82f6",
-  };
 
   return (
     <box
@@ -165,124 +163,33 @@ const App = () => {
       height={dimensions.height}
       backgroundColor={RGBA.fromHex(Theme.background)}
       flexDirection="column"
+      paddingBottom={1}
     >
-      {/* Header */}
-      <box
-        height={3}
-        borderColor={RGBA.fromHex(Theme.border)}
-        backgroundColor={RGBA.fromHex(Theme.backgroundPanel)}
-        paddingLeft={2}
-        paddingRight={2}
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <box flexDirection="row" gap={2}>
-          <text fg={Theme.primary} attributes={TextAttributes.BOLD}>
-            💬 Rivet Chat
-          </text>
-          <text fg={Theme.textMuted}>
-            {activeUsers.length} online
-          </text>
-        </box>
-        <text fg={Theme.textMuted} attributes={TextAttributes.DIM}>
-          esc to blur • ctrl+c to clear • ctrl+c x2 to exit
-        </text>
-      </box>
+      <Header activeUsersCount={activeUsers.length} />
 
       {/* Messages Area */}
       <box flexGrow={1} flexDirection="row">
         {/* Main Chat */}
         <box flexGrow={1} flexDirection="column">
-          <scrollbox
-            ref={scrollRef}
-            flexGrow={1}
-            paddingLeft={2}
-            paddingRight={2}
-            paddingTop={1}
-            backgroundColor={RGBA.fromHex(Theme.background)}
-            scrollbarOptions={{ visible: false }}
-          >
-            {messages.map((message) => (
-              <box key={message.id} paddingBottom={1}>
-                <box flexDirection="row" gap={1} alignItems="center">
-                  <text
-                    fg={message.isOwn ? Theme.own : Theme.primary}
-                    attributes={TextAttributes.BOLD}
-                  >
-                    {message.sender}
-                  </text>
-                  <text fg={Theme.textMuted} attributes={TextAttributes.DIM}>
-                    {formatTime(message.timestamp)}
-                  </text>
-                </box>
-                <box paddingLeft={2}>
-                  <text fg={Theme.text}>{message.content}</text>
-                </box>
-              </box>
-            ))}
-          </scrollbox>
+          <MessageList
+            messages={messages}
+            scrollRef={scrollRef}
+            isFocused={focusedPanel === "messages"}
+          />
 
-          {/* Input Area */}
-          <box
-            flexShrink={0}
-            borderColor={RGBA.fromHex(Theme.border)}
-            backgroundColor={RGBA.fromHex(Theme.backgroundPanel)}
-            paddingLeft={2}
-            paddingRight={2}
-            paddingBottom={1}
-          >
-            <input
-              ref={inputRef}
-              value={inputValue}
-              onInput={setInputValue}
-              onSubmit={handleSubmit}
-              placeholder="Type a message..."
-              focusedBackgroundColor={RGBA.fromHex(Theme.backgroundPanel)}
-              cursorColor={RGBA.fromHex(Theme.primary)}
-              focusedTextColor={RGBA.fromHex(Theme.text)}
-            />
-          </box>
-
-          {/* Status Message */}
-          <box
-            height={1}
-            flexShrink={0}
-            backgroundColor={RGBA.fromHex(Theme.backgroundPanel)}
-            paddingLeft={2}
-            paddingRight={2}
-            paddingBottom={1}
-          >
-            {showExitPrompt && (
-              <text fg={Theme.textMuted} attributes={TextAttributes.DIM}>
-                Press Ctrl+C again to exit
-              </text>
-            )}
-          </box>
+          <InputArea
+            inputRef={inputRef}
+            value={inputValue}
+            onInput={setInputValue}
+            onSubmit={handleSubmit}
+            isFocused={focusedPanel === "input"}
+          />
         </box>
 
-        {/* Sidebar */}
-        <box
-          width={20}
-          borderColor={RGBA.fromHex(Theme.border)}
-          backgroundColor={RGBA.fromHex(Theme.backgroundPanel)}
-          paddingTop={1}
-          paddingLeft={1}
-          paddingRight={1}
-        >
-          <text fg={Theme.textMuted} attributes={TextAttributes.BOLD}>
-            Online ({activeUsers.length})
-          </text>
-          <box paddingTop={1} gap={1}>
-            {activeUsers.map((user) => (
-              <box key={user} flexDirection="row" gap={1} alignItems="center">
-                <text fg={Theme.success}>●</text>
-                <text fg={user === "You" ? Theme.own : Theme.text}>{user}</text>
-              </box>
-            ))}
-          </box>
-        </box>
+        <Sidebar activeUsers={activeUsers} isFocused={focusedPanel === "sidebar"} />
       </box>
+
+      <StatusBar focusedPanel={focusedPanel} />
     </box>
   );
 };
