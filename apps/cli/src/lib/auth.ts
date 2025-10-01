@@ -1,6 +1,6 @@
 import { usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
-import { writeLog } from "../hooks/useLog";
+import { writeLog } from "../hooks/use-log";
 import { getAuthToken, saveAuthToken } from "./credentials";
 
 export const authClient = createAuthClient({

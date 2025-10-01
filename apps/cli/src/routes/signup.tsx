@@ -1,7 +1,7 @@
 import { RGBA } from "@opentui/core";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { useCallback, useState } from "react";
-import { useLog } from "../hooks/useLog";
+import { useLog } from "../hooks/use-log";
 import { authClient } from "../lib/auth";
 import { useRouter } from "../providers/router-provider";
 import { Theme } from "../theme";

@@ -1,6 +1,6 @@
 import { TextAttributes } from "@opentui/core";
 import { Theme } from "../theme";
-import { Message as MessageType } from "../types";
+import type { Message as MessageType } from "../types";
 
 interface MessageProps {
   message: MessageType;
