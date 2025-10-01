@@ -9,9 +9,9 @@ export type ChatRoom = {
 };
 
 export const chatManifest = actor({
-  onBeforeConnect: async (_, opts, params: AuthConnParams) => {
-    await validateAuth(params, { request: opts.request });
-  },
+//   onBeforeConnect: async (_, opts, params: AuthConnParams) => {
+//     await validateAuth(params, { request: opts.request });
+//   },
   state: {
     chats: {} as Record<string, ChatRoom>,
   },
