@@ -58,10 +58,12 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      // Scroll to a large number to reach bottom
-      scrollRef.current.scrollTo(999999);
-    }
+    // Defer scroll to allow layout to update
+    setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo(999999);
+      }
+    }, 0);
   }, [messages]);
 
   const handleSubmit = useCallback(() => {
@@ -198,7 +200,8 @@ const App = () => {
             paddingLeft={2}
             paddingRight={2}
             paddingTop={1}
-            scrollbarOptions={{ visible: true }}
+            backgroundColor={RGBA.fromHex(Theme.background)}
+            scrollbarOptions={{ visible: false }}
           >
             {messages.map((message) => (
               <box key={message.id} paddingBottom={1}>
