@@ -1,14 +1,14 @@
 import { type ParsedKey } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { authClient } from "../lib/auth";
 import { clearAuthToken } from "../lib/credentials";
 import { useRouter } from "../providers/router-provider";
-import { ConfirmationDialog } from "./confirmation-dialog";
+import { useModal, ConfirmationModalKey } from "../providers/modal-provider";
 
 export const LogoutHandler = () => {
   const { navigate } = useRouter();
-  const [showDialog, setShowDialog] = useState(false);
+  const modal = useModal();
 
   const handleLogout = useCallback(async () => {
     try {
@@ -20,24 +20,25 @@ export const LogoutHandler = () => {
     navigate("signin");
   }, [navigate]);
 
-  const handleKeyboard = useCallback((evt: ParsedKey) => {
-    if (evt.ctrl && evt.name === "l") {
-      setShowDialog(true);
-    }
-  }, []);
+  const handleKeyboard = useCallback(
+    (evt: ParsedKey) => {
+      if (evt.ctrl && evt.name === "l") {
+        modal({
+          type: ConfirmationModalKey,
+          data: {
+            title: "Logout",
+            message: "Are you sure you want to logout?",
+            confirmText: "Logout",
+            cancelText: "Cancel",
+            onConfirm: handleLogout,
+          },
+        });
+      }
+    },
+    [modal, handleLogout]
+  );
 
   useKeyboard(handleKeyboard);
 
-  if (!showDialog) return null;
-
-  return (
-    <ConfirmationDialog
-      title="Logout"
-      message="Are you sure you want to logout?"
-      confirmText="Logout"
-      cancelText="Cancel"
-      onConfirm={handleLogout}
-      onClose={() => setShowDialog(false)}
-    />
-  );
+  return null;
 };

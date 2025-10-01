@@ -1,0 +1,15 @@
+packages:
+  - apps/*
+  - packages/*
+
+catalog:
+  '@types/node': 24.5.2
+  better-auth: 1.3.24
+  rivetkit: 2.0.8
+  typescript: 5.9.2
+
+ignoredBuiltDependencies:
+  - cbor-extract
+
+onlyBuiltDependencies:
+  - better-sqlite3

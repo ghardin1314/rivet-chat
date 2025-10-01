@@ -40,7 +40,6 @@ export const HomeRoute = () => {
       </box>
 
       <StatusBar focusedPanel={focusedSlug} />
-
       <LogoutHandler />
     </box>
   );

@@ -9,6 +9,7 @@
     "./*": "./src/*.ts"
   },
   "devDependencies": {
+    "@types/react": "19.1.17",
     "@types/bun": "latest"
   },
   "peerDependencies": {

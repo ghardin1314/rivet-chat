@@ -4,6 +4,7 @@ import { ErrorBoundary } from "./components/error-boundary";
 import { clearLogs } from "./hooks/use-log";
 import { ChatProvider } from "./providers/chat-provider";
 import { FocusProvider } from "./providers/focus-provider";
+import { ModalProvider } from "./providers/modal-provider";
 import { RouterProvider, useRouter } from "./providers/router-provider";
 import { HomeRoute } from "./routes/home";
 import { LoadingRoute } from "./routes/loading";
@@ -41,7 +42,9 @@ await render(
       <RouterProvider>
         <ChatProvider>
           <FocusProvider>
-            <App />
+            <ModalProvider>
+              <App />
+            </ModalProvider>
           </FocusProvider>
         </ChatProvider>
       </RouterProvider>
