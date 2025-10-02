@@ -7,8 +7,6 @@ const rivetRegistry = registry.start({});
 
 const app = new Hono();
 
-app.get("/", (c) => c.text("Hello Bun!"));
-
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 serve({

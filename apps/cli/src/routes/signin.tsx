@@ -10,7 +10,7 @@ import { Theme } from "../theme";
 
 export const SignInRoute = () => {
   const dimensions = useTerminalDimensions();
-  const { info } = useLog();
+  const { info, error } = useLog();
   const { navigate } = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -35,23 +35,27 @@ export const SignInRoute = () => {
 
       return response.data;
     },
+
+    onMutate: () => {
+      info("Signing in", { username });
+    },
     onSuccess: (data) => {
       info("Signin successful", data);
       navigate("home");
     },
+    onError: (err) => {
+      error("Signin failed", err);
+    },
   });
 
   useKeyboard((key) => {
-    info("Key pressed", key);
     if (key.ctrl && key.name === "c") {
       process.exit(0);
     }
 
-    if (key.name === "j" && key.meta) {
+    if (key.name === "escape") {
       navigate("signup");
     }
-
-    info("Key pressed", key);
 
     if (key.name === "tab" || key.name === "up" || key.name === "down") {
       setFocused((prev) => (prev === "username" ? "password" : "username"));
@@ -138,7 +142,7 @@ export const SignInRoute = () => {
         </box>
 
         <text fg={Theme.textMuted}>
-          Tab: Switch | Enter: Submit | Opt+J: Sign Up | Cmd+C: Quit
+          Tab: Switch | Enter: Submit | Escape: Sign Up | Cmd+C: Quit
         </text>
       </box>
     </box>

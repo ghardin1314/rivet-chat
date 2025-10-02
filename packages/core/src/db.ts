@@ -1,7 +1,8 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import * as schema from "./schema";
 
-const connectionString = 'postgresql://rivet:rivet_password@localhost:54320/rivet';
+import { drizzle } from "drizzle-orm/node-postgres";
 
-const client = postgres(connectionString);
-export const db = drizzle(client);
+const connectionString =
+  "postgresql://rivet:rivet_password@localhost:54320/rivet";
+
+export const db = drizzle(connectionString, { schema });

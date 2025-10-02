@@ -12,6 +12,7 @@ services:
     restart: unless-stopped
 
   rivet-engine:
+    platform: linux/amd64
     image: rivetkit/engine:latest
     ports:
       - "6420:6420"

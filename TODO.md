@@ -1,11 +1,15 @@
 # TODO
 
 ## Database & Storage
-- [ ] Set up Postgres
-- [ ] Set up Drizzle ORM
-- [ ] Use Drizzle for authentication
-- [ ] Use Postgres for Rivet storage
-- [ ] Resolve users when querying chats
+- [x] Set up Postgres
+- [x] Set up Drizzle ORM
+- [x] Use Drizzle for authentication
+- [x] Use Postgres for Rivet storage
+- [x] Resolve users when querying chats
+- [ ] use tanstack db for sync engine
+
+## Fixes
+- [ ] Type inference
 
 ## Features
 - [ ] Authorization checks

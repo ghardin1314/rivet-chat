@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/pg": "^8.15.5",
     "drizzle-kit": "0.31.5"
   },
   "peerDependencies": {
@@ -23,9 +24,10 @@
   },
   "dependencies": {
     "better-auth": "catalog:",
-    "rivetkit": "catalog:",
-    "nanoid": "5.1.6",
     "drizzle-orm": "0.44.5",
-    "postgres": "3.4.7"
+    "nanoid": "5.1.6",
+    "pg": "^8.16.3",
+    "postgres": "3.4.7",
+    "rivetkit": "catalog:"
   }
 }

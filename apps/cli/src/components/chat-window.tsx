@@ -1,5 +1,5 @@
 import { InputRenderable, ScrollBoxRenderable } from "@opentui/core";
-import type { Message as RivetMessage } from "@rivetchat/core/types";
+import type { MessageWithUser } from "@rivetchat/core";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLog } from "../hooks/use-log";
@@ -73,12 +73,13 @@ export const ChatWindow = () => {
 
   // Format messages for display
   const messages: Message[] = (messagesQuery.data || []).map(
-    (msg: RivetMessage) => ({
+    (msg: MessageWithUser) => ({
       id: `${msg.timestamp}`,
-      sender: msg.sender,
+      sender: msg.sender.id,
+      username: msg.sender.username || undefined,
       content: msg.text,
       timestamp: new Date(msg.timestamp),
-      isOwn: msg.sender === session?.user?.id,
+      isOwn: msg.sender.id === session?.user?.id,
     })
   );
 

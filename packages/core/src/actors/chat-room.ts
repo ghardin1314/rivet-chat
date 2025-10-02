@@ -1,8 +1,15 @@
+import { inArray } from "drizzle-orm";
 import { actor } from "rivetkit";
+import { db } from "../db";
+import { user } from "../schema/auth";
 import type { AuthConnParams } from "./prelude";
-import { validateAuth } from "./prelude";
 
 export type Message = { sender: string; text: string; timestamp: number };
+export type MessageWithUser = {
+  sender: { id: string; username: string | null };
+  text: string;
+  timestamp: number;
+};
 
 export const chatRoom = actor({
   onBeforeConnect: async (_, opts, params: AuthConnParams) => {
@@ -25,6 +32,32 @@ export const chatRoom = actor({
       return message;
     },
 
-    getHistory: (c) => c.state.messages,
+    getHistory: async (c) => {
+      // Get unique sender IDs from messages
+      const senderIds = [...new Set(c.state.messages.map((m) => m.sender))];
+
+      if (senderIds.length === 0) {
+        return [];
+      }
+
+      // Fetch all users from database
+      const users = await db
+        .select({ id: user.id, username: user.username })
+        .from(user)
+        .where(inArray(user.id, senderIds));
+
+      // Create a map for quick lookup
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      // Map messages to include user objects
+      return c.state.messages.map((message) => ({
+        sender: userMap.get(message.sender) || {
+          id: message.sender,
+          username: null,
+        },
+        text: message.text,
+        timestamp: message.timestamp,
+      })) as MessageWithUser[];
+    },
   },
 });

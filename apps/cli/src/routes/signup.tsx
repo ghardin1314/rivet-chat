@@ -54,7 +54,7 @@ export const SignUpRoute = () => {
       process.exit(0);
     }
 
-    if (key.name === "j" && key.meta) {
+    if (key.name === "escape") {
       navigate("signin");
     }
 
@@ -62,7 +62,7 @@ export const SignUpRoute = () => {
       const fields = ["username", "email", "password"] as const;
       const currentIndex = fields.indexOf(focused);
       const nextIndex = (currentIndex + 1) % fields.length;
-      setFocused(fields[nextIndex]);
+      setFocused(fields[nextIndex]!);
     }
   });
 
@@ -167,7 +167,7 @@ export const SignUpRoute = () => {
         </box>
 
         <text fg={Theme.textMuted}>
-          Tab: Switch | Enter: Submit | Opt+J: Sign In | Cmd+C: Quit
+          Tab: Switch | Enter: Submit | Escape: Sign In | Cmd+C: Quit
         </text>
       </box>
     </box>

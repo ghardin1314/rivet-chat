@@ -21,7 +21,7 @@ export const Message = ({ message }: MessageProps) => {
           fg={message.isOwn ? Theme.own : Theme.primary}
           attributes={TextAttributes.BOLD}
         >
-          {message.sender}
+          {message.username || message.sender}
         </text>
         <text fg={Theme.textMuted} attributes={TextAttributes.DIM}>
           {formatTime(message.timestamp)}
