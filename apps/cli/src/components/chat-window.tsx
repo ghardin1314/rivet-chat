@@ -33,11 +33,7 @@ export const ChatWindow = () => {
   // Fetch message history
   const messagesQuery = useQuery({
     queryKey: ["messages", activeChatId],
-    queryFn: () =>
-      chatRoom.connection?.action({
-        name: "getHistory",
-        args: [],
-      }),
+    queryFn: async () => chatRoom.connection?.getHistory(),
     enabled: !!chatRoom.isConnected,
   });
 
@@ -52,10 +48,7 @@ export const ChatWindow = () => {
       setInputValue("");
     },
     mutationFn: async (text: string) => {
-      await chatRoom.connection!.action({
-        name: "sendMessage",
-        args: [text],
-      });
+      await chatRoom.connection!.sendMessage(text);
     },
     onSuccess: (response) => {
       log.info("Message sent", response);

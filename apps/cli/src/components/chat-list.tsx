@@ -33,11 +33,7 @@ export const ChatList = () => {
   });
   const chats = useQuery({
     queryKey: ["chats"],
-    queryFn: () =>
-      chatManifest.connection?.action({
-        name: "listChats",
-        args: [],
-      }),
+    queryFn: () => chatManifest.connection?.listChats(),
     enabled: !!chatManifest.isConnected,
   });
 
@@ -48,16 +44,13 @@ export const ChatList = () => {
   // Set active chat to first chat on initial load
   useEffect(() => {
     if (chats.data && chats.data.length > 0 && !activeChatId) {
-      setActiveChatId(chats.data[0].id);
+      setActiveChatId(chats.data[0]!.id);
     }
   }, [chats.data, activeChatId, setActiveChatId]);
 
   const handleCreateChat = useCallback(
     async (name: string) => {
-      const newChat = await chatManifest.connection?.action({
-        name: "createChat",
-        args: [name],
-      });
+      const newChat = await chatManifest.connection?.createChat(name);
       chats.refetch();
       if (newChat) {
         setActiveChatId(newChat.id);
@@ -78,12 +71,12 @@ export const ChatList = () => {
 
       if (key === "j") {
         const nextIndex = ((currentIndex ?? 0) + 1) % (chats.data?.length ?? 1);
-        setActiveChatId(chats.data?.[nextIndex].id);
+        setActiveChatId(chats.data?.[nextIndex]!.id!);
       } else if (key === "k") {
         const prevIndex =
           ((currentIndex ?? 0) - 1 + (chats.data?.length ?? 1)) %
           (chats.data?.length ?? 1);
-        setActiveChatId(chats.data?.[prevIndex].id);
+        setActiveChatId(chats.data?.[prevIndex]!.id!);
       }
     },
     [activeChatId, setActiveChatId, chats.data]
