@@ -1,5 +1,6 @@
 import { actor } from "rivetkit";
 import type { registry } from "../types";
+import { generateId } from "./prelude";
 
 export type ChatRoom = {
   id: string;
@@ -18,7 +19,7 @@ export const chatManifest = actor({
     createChat: (c, name: string) => {
       const client = c.client<typeof registry>();
 
-      const id = crypto.randomUUID();
+      const id = generateId("chat");
 
       const chatRoom = client.chatRoom.getOrCreate(id);
 

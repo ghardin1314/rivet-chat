@@ -54,13 +54,16 @@ export const ChatList = () => {
 
   const handleCreateChat = useCallback(
     async (name: string) => {
-      await chatManifest.connection?.action({
+      const newChat = await chatManifest.connection?.action({
         name: "createChat",
         args: [name],
       });
       chats.refetch();
+      if (newChat) {
+        setActiveChatId(newChat.id);
+      }
     },
-    [chatManifest.connection, chats]
+    [chatManifest.connection, chats, setActiveChatId]
   );
 
   const handleCreateChatModal = useCallback(() => {
