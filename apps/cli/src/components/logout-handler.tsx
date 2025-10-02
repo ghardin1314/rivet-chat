@@ -1,10 +1,9 @@
-import { type ParsedKey } from "@opentui/core";
-import { useKeyboard } from "@opentui/react";
 import { useCallback } from "react";
 import { authClient } from "../lib/auth";
 import { clearAuthToken } from "../lib/credentials";
 import { useRouter } from "../providers/router-provider";
 import { useModal, ConfirmationModalKey } from "../providers/modal-provider";
+import { useKeybinding } from "../providers/keybinding-provider";
 
 export const LogoutHandler = () => {
   const { navigate } = useRouter();
@@ -20,25 +19,27 @@ export const LogoutHandler = () => {
     navigate("signin");
   }, [navigate]);
 
-  const handleKeyboard = useCallback(
-    (evt: ParsedKey) => {
-      if (evt.ctrl && evt.name === "l") {
-        modal({
-          type: ConfirmationModalKey,
-          data: {
-            title: "Logout",
-            message: "Are you sure you want to logout?",
-            confirmText: "Logout",
-            cancelText: "Cancel",
-            onConfirm: handleLogout,
-          },
-        });
-      }
-    },
-    [modal, handleLogout]
-  );
+  const handleLogoutPrompt = useCallback(() => {
+    modal({
+      type: ConfirmationModalKey,
+      data: {
+        title: "Logout",
+        message: "Are you sure you want to logout?",
+        confirmText: "Logout",
+        cancelText: "Cancel",
+        onConfirm: handleLogout,
+      },
+    });
+  }, [modal, handleLogout]);
 
-  useKeyboard(handleKeyboard);
+  useKeybinding({
+    keys: ["ctrl+l"],
+    description: "logout",
+    handler: handleLogoutPrompt,
+    visible: false,
+    priority: 100,
+    category: "app",
+  });
 
   return null;
 };

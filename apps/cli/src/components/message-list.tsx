@@ -10,7 +10,7 @@ interface MessageListProps {
 
 export const MessageList = ({ messages, scrollRef }: MessageListProps) => {
   return (
-    <Section title="Messages" focusIndex={0} focusSlug="messages" flexGrow={1}>
+    <Section title="Messages" focusIndex={1} focusSlug="messages" flexGrow={1}>
       <scrollbox
         ref={scrollRef}
         flexGrow={1}

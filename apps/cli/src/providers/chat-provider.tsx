@@ -8,7 +8,7 @@ interface ChatContextValue {
 const ChatContext = createContext<ChatContextValue | undefined>(undefined);
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const [activeChatId, setActiveChatId] = useState("1");
+  const [activeChatId, setActiveChatId] = useState("");
 
   return (
     <ChatContext.Provider value={{ activeChatId, setActiveChatId }}>

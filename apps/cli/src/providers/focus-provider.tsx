@@ -1,4 +1,5 @@
 import { useKeyboard } from "@opentui/react";
+import type { ParsedKey } from "@opentui/core";
 import {
   createContext,
   useCallback,
@@ -6,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useKeybindings } from "./keybinding-provider";
 
 type FocusableSection = {
   focusIndex: number;
@@ -31,7 +33,7 @@ export const useFocus = () => {
 };
 
 export const FocusProvider = ({ children }: { children: React.ReactNode }) => {
-  const [focusedSlug, setFocusedSlug] = useState<string | null>("messages");
+  const [focusedSlug, setFocusedSlug] = useState<string | null>("chats");
   const sectionsRef = useRef<Map<string, FocusableSection>>(new Map());
 
   const registerSection = useCallback((section: FocusableSection) => {
@@ -47,32 +49,90 @@ export const FocusProvider = ({ children }: { children: React.ReactNode }) => {
     [focusedSlug]
   );
 
+  const handleTabNext = useCallback(() => {
+    const sortedSections = Array.from(sectionsRef.current.values()).sort(
+      (a, b) => a.focusIndex - b.focusIndex
+    );
+
+    if (sortedSections.length === 0) return;
+
+    const currentIndex = sortedSections.findIndex(
+      (s) => s.focusSlug === focusedSlug
+    );
+
+    const nextIndex = (currentIndex + 1) % sortedSections.length;
+    setFocusedSlug(sortedSections[nextIndex].focusSlug);
+  }, [focusedSlug]);
+
+  const handleTabPrev = useCallback(() => {
+    const sortedSections = Array.from(sectionsRef.current.values()).sort(
+      (a, b) => a.focusIndex - b.focusIndex
+    );
+
+    if (sortedSections.length === 0) return;
+
+    const currentIndex = sortedSections.findIndex(
+      (s) => s.focusSlug === focusedSlug
+    );
+
+    const nextIndex =
+      currentIndex <= 0 ? sortedSections.length - 1 : currentIndex - 1;
+    setFocusedSlug(sortedSections[nextIndex].focusSlug);
+  }, [focusedSlug]);
+
+  const handleInsertMode = useCallback(() => {
+    if (focusedSlug === "messages") {
+      setFocusedSlug("input");
+    }
+  }, [focusedSlug]);
+
+  const handleExitInput = useCallback(() => {
+    if (focusedSlug === "input") {
+      setFocusedSlug("messages");
+    }
+  }, [focusedSlug]);
+
+  useKeybindings([
+    {
+      keys: ["tab"],
+      description: "next panel",
+      handler: handleTabNext,
+      visible: false,
+      active: true,
+      priority: 90,
+      category: "navigation",
+    },
+    {
+      keys: ["shift+tab"],
+      description: "prev panel",
+      handler: handleTabPrev,
+      visible: false,
+      active: true,
+      priority: 90,
+      category: "navigation",
+    },
+    {
+      keys: ["i"],
+      description: "insert",
+      handler: handleInsertMode,
+      visible: true,
+      active: focusedSlug === "messages",
+      priority: 80,
+      category: "input",
+    },
+    {
+      keys: ["escape"],
+      description: "cancel",
+      handler: handleExitInput,
+      visible: true,
+      active: focusedSlug === "input",
+      priority: 80,
+      category: "input",
+    },
+  ]);
+
   const handleKeyboard = useCallback(
-    (evt: any) => {
-      // Panel navigation with Tab/Shift+Tab
-      if (evt.name === "tab") {
-        const sortedSections = Array.from(sectionsRef.current.values()).sort(
-          (a, b) => a.focusIndex - b.focusIndex
-        );
-
-        if (sortedSections.length === 0) return;
-
-        const currentIndex = sortedSections.findIndex(
-          (s) => s.focusSlug === focusedSlug
-        );
-
-        if (evt.shift) {
-          // Previous section
-          const nextIndex =
-            currentIndex <= 0 ? sortedSections.length - 1 : currentIndex - 1;
-          setFocusedSlug(sortedSections[nextIndex].focusSlug);
-        } else {
-          // Next section
-          const nextIndex = (currentIndex + 1) % sortedSections.length;
-          setFocusedSlug(sortedSections[nextIndex].focusSlug);
-        }
-      }
-
+    (evt: ParsedKey) => {
       // Numeric focus (0-9) - skip if in input mode
       if (
         evt.name &&
@@ -86,16 +146,6 @@ export const FocusProvider = ({ children }: { children: React.ReactNode }) => {
         if (section) {
           setFocusedSlug(section.focusSlug);
         }
-      }
-
-      // Enter insert mode from messages panel
-      if (evt.name === "i" && focusedSlug === "messages") {
-        setFocusedSlug("input");
-      }
-
-      // Exit input mode
-      if (evt.name === "escape" && focusedSlug === "input") {
-        setFocusedSlug("messages");
       }
     },
     [focusedSlug]

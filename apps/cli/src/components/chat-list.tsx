@@ -1,14 +1,14 @@
-import { TextAttributes, type ParsedKey } from "@opentui/core";
-import { useKeyboard } from "@opentui/react";
+import { TextAttributes } from "@opentui/core";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useLog } from "../hooks/use-log";
 import { useSession } from "../hooks/use-session";
 import { useActor } from "../lib/actors";
 import { useChat } from "../providers/chat-provider";
 import { useFocus } from "../providers/focus-provider";
+import { useKeybindings } from "../providers/keybinding-provider";
+import { useModal, CreateChatModalKey } from "../providers/modal-provider";
 import { Theme } from "../theme";
-import { CreateChatHandler } from "./create-chat-handler";
 import { Section } from "./section";
 
 export interface Chat {
@@ -19,7 +19,8 @@ export interface Chat {
 export const ChatList = () => {
   const { activeChatId, setActiveChatId } = useChat();
   const { data } = useSession();
-  const { focusedSlug } = useFocus();
+  const { focusedSlug, setFocusedSlug } = useFocus();
+  const modal = useModal();
   const log = useLog();
   // Works
   const chatManifest = useActor({
@@ -44,32 +45,82 @@ export const ChatList = () => {
     chats.refetch();
   });
 
-  const handleKeyboard = useCallback(
-    (evt: ParsedKey) => {
-      if (focusedSlug === "chats") {
-        const currentIndex = chats.data?.findIndex(
-          (chat) => chat.id === activeChatId
-        );
-        if (evt.name === "j" || evt.name === "down") {
-          const nextIndex = (currentIndex + 1) % chats.data?.length;
-          setActiveChatId(chats.data?.[nextIndex].id);
-        } else if (evt.name === "k" || evt.name === "up") {
-          const prevIndex =
-            (currentIndex - 1 + chats.data?.length) % chats.data?.length;
-          setActiveChatId(chats.data?.[prevIndex].id);
-        }
-      }
+  // Set active chat to first chat on initial load
+  useEffect(() => {
+    if (chats.data && chats.data.length > 0 && !activeChatId) {
+      setActiveChatId(chats.data[0].id);
+    }
+  }, [chats.data, activeChatId, setActiveChatId]);
+
+  const handleCreateChat = useCallback(
+    async (name: string) => {
+      await chatManifest.connection?.action({
+        name: "createChat",
+        args: [name],
+      });
+      chats.refetch();
     },
-    [focusedSlug, activeChatId, setActiveChatId, chats.data]
+    [chatManifest.connection, chats]
   );
 
-  useKeyboard(handleKeyboard)
-  
+  const handleCreateChatModal = useCallback(() => {
+    modal({ type: CreateChatModalKey, data: { onConfirm: handleCreateChat } });
+  }, [modal, handleCreateChat]);
+
+  const handleNavigateChat = useCallback((key?: string) => {
+    const currentIndex = chats.data?.findIndex(
+      (chat) => chat.id === activeChatId
+    );
+
+    if (key === "j") {
+      const nextIndex = ((currentIndex ?? 0) + 1) % (chats.data?.length ?? 1);
+      setActiveChatId(chats.data?.[nextIndex].id);
+    } else if (key === "k") {
+      const prevIndex =
+        ((currentIndex ?? 0) - 1 + (chats.data?.length ?? 1)) % (chats.data?.length ?? 1);
+      setActiveChatId(chats.data?.[prevIndex].id);
+    }
+  }, [activeChatId, setActiveChatId, chats.data]);
+
+  const handleSelectChat = useCallback(() => {
+    setFocusedSlug("input");
+  }, [setFocusedSlug]);
+
+  useKeybindings([
+    {
+      keys: ["n"],
+      description: "new chat",
+      handler: handleCreateChatModal,
+      visible: true,
+      active: focusedSlug === "chats",
+      priority: 70,
+      category: "chats",
+    },
+    {
+      keys: ["j", "k"],
+      description: "navigate",
+      handler: handleNavigateChat,
+      visible: true,
+      active: focusedSlug === "chats",
+      priority: 69,
+      category: "chats",
+    },
+    {
+      keys: ["return"],
+      description: "select",
+      handler: handleSelectChat,
+      visible: true,
+      active: focusedSlug === "chats",
+      priority: 68,
+      category: "chats",
+    },
+  ]);
+
   log.debug("chats", { chats: chats.data });
 
   return (
     <>
-      <Section title="Chats" focusIndex={1} focusSlug="chats" width={25}>
+      <Section title="Chats" focusIndex={0} focusSlug="chats" width={25}>
         <box paddingLeft={1} paddingRight={1} paddingBottom={1} gap={1}>
           {chats.data?.map((chat) => {
             const isActive = chat.id === activeChatId;
@@ -92,7 +143,6 @@ export const ChatList = () => {
           })}
         </box>
       </Section>
-      <CreateChatHandler />
     </>
   );
 };

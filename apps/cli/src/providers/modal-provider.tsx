@@ -10,11 +10,13 @@ import {
 } from "react";
 import { ConfirmationModalContent } from "../components/modals/confirmation-modal";
 import { CreateChatModalContent } from "../components/modals/create-chat-modal";
+import { HelpModalContent } from "../components/modals/help-modal";
 import { Theme } from "../theme";
 
 // Modal keys
 export const CreateChatModalKey = "create-chat";
 export const ConfirmationModalKey = "confirmation";
+export const HelpModalKey = "help";
 
 // Modal config - add your modals here with their prop types
 export type ModalConfig =
@@ -34,6 +36,10 @@ export type ModalConfig =
         onConfirm?: () => void;
         onCancel?: () => void;
       };
+    }
+  | {
+      type: typeof HelpModalKey;
+      data: Record<string, never>;
     };
 
 export type ModalType = ModalConfig["type"];
@@ -136,6 +142,10 @@ function ModalContent() {
 
   if (modal.type === ConfirmationModalKey) {
     return <ConfirmationModalContent {...modal.data} />;
+  }
+
+  if (modal.type === HelpModalKey) {
+    return <HelpModalContent />;
   }
 
   // Exhaustive check

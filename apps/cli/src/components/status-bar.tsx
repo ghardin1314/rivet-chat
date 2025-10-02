@@ -1,41 +1,15 @@
 import { TextAttributes } from "@opentui/core";
 import { useSession } from "../hooks/use-session";
+import { useKeybindingContext } from "../providers/keybinding-provider";
 import { Theme } from "../theme";
-import type { KeyBinding } from "../types";
 
 interface StatusBarProps {
   focusedPanel: string | null;
 }
 
-const getKeyBindings = (panel: string | null): KeyBinding[] => {
-  const common: KeyBinding[] = [
-    { key: "tab", description: "next panel" },
-    { key: "shift+tab", description: "prev panel" },
-    { key: "q", description: "quit" },
-  ];
-
-  switch (panel) {
-    case "messages":
-      return [
-        { key: "j/k", description: "scroll" },
-        { key: "i", description: "insert" },
-        ...common,
-      ];
-    case "sidebar":
-      return [{ key: "j/k", description: "navigate" }, ...common];
-    case "input":
-      return [
-        { key: "enter", description: "send" },
-        { key: "esc", description: "cancel" },
-        ...common,
-      ];
-    default:
-      return common;
-  }
-};
-
 export const StatusBar = ({ focusedPanel }: StatusBarProps) => {
-  const bindings = getKeyBindings(focusedPanel);
+  const { getVisibleKeybindings } = useKeybindingContext();
+  const bindings = getVisibleKeybindings();
   const { data } = useSession();
 
   return (

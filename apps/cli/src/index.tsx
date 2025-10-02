@@ -4,6 +4,7 @@ import { ErrorBoundary } from "./components/error-boundary";
 import { clearLogs } from "./hooks/use-log";
 import { ChatProvider } from "./providers/chat-provider";
 import { FocusProvider } from "./providers/focus-provider";
+import { KeyBindingProvider } from "./providers/keybinding-provider";
 import { ModalProvider } from "./providers/modal-provider";
 import { RouterProvider, useRouter } from "./providers/router-provider";
 import { HomeRoute } from "./routes/home";
@@ -41,11 +42,13 @@ await render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider>
         <ChatProvider>
-          <FocusProvider>
-            <ModalProvider>
-              <App />
-            </ModalProvider>
-          </FocusProvider>
+          <KeyBindingProvider>
+            <FocusProvider>
+              <ModalProvider>
+                <App />
+              </ModalProvider>
+            </FocusProvider>
+          </KeyBindingProvider>
         </ChatProvider>
       </RouterProvider>
     </QueryClientProvider>

@@ -11,4 +11,16 @@ export type Panel = "messages" | "sidebar" | "input";
 export interface KeyBinding {
   key: string;
   description: string;
+  visible?: boolean;
+}
+
+export interface KeyBindingAction {
+  id: string;
+  description: string;
+  keys: string[];
+  handler: (key?: string) => void;
+  visible?: boolean;
+  priority?: number;
+  active?: boolean;
+  category?: string;
 }
