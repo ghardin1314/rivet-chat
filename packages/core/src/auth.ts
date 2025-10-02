@@ -1,9 +1,13 @@
 import { betterAuth } from "better-auth";
 import { bearer, username } from "better-auth/plugins";
-import { Database } from "bun:sqlite";
+import { db } from "./db";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+
 
 export const auth = betterAuth({
-  database: new Database("./sqlite.db"),
+  database: drizzleAdapter(db, {
+    provider: "pg",
+  }),
   emailAndPassword: {
     enabled: true,
   },
