@@ -1,97 +1,85 @@
-import {
-  InputRenderable,
-  ScrollBoxRenderable,
-  type ParsedKey,
-} from "@opentui/core";
-import { useKeyboard } from "@opentui/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { InputRenderable, ScrollBoxRenderable } from "@opentui/core";
+import type { Message as RivetMessage } from "@rivetchat/core/types";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLog } from "../hooks/use-log";
+import { useSession } from "../hooks/use-session";
+import { useActor } from "../lib/actors";
 import { useChat } from "../providers/chat-provider";
 import { useFocus } from "../providers/focus-provider";
 import type { Message } from "../types";
 import { InputArea } from "./input-area";
 import { MessageList } from "./message-list";
 
-const MOCK_USERS = ["Alice", "Bob", "Charlie", "You"];
-
-const now = new Date();
-
-const MOCK_MESSAGES: Record<string, Message[]> = {
-  "1": [
-    {
-      id: "1-1",
-      sender: "Alice",
-      content: "Hey everyone! Welcome to the chat!",
-      timestamp: new Date(now.getTime() - 300000),
-      isOwn: false,
-    },
-    {
-      id: "1-2",
-      sender: "Bob",
-      content: "Thanks! This TUI looks great 🎉",
-      timestamp: new Date(now.getTime() - 240000),
-      isOwn: false,
-    },
-    {
-      id: "1-3",
-      sender: "You",
-      content: "Thanks! Built with OpenTUI",
-      timestamp: new Date(now.getTime() - 180000),
-      isOwn: true,
-    },
-    {
-      id: "1-4",
-      sender: "Charlie",
-      content: "Very cool! How does the message sending work?",
-      timestamp: new Date(now.getTime() - 120000),
-      isOwn: false,
-    },
-  ],
-  "2": [
-    {
-      id: "2-1",
-      sender: "Alice",
-      content: "Anyone working on interesting projects?",
-      timestamp: new Date(now.getTime() - 500000),
-      isOwn: false,
-    },
-    {
-      id: "2-2",
-      sender: "You",
-      content: "Building a chat app with Party",
-      timestamp: new Date(now.getTime() - 400000),
-      isOwn: true,
-    },
-    {
-      id: "2-3",
-      sender: "Bob",
-      content: "That's interesting!",
-      timestamp: new Date(now.getTime() - 300000),
-      isOwn: false,
-    },
-  ],
-  "3": [
-    {
-      id: "3-1",
-      sender: "Charlie",
-      content: "LOL!",
-      timestamp: new Date(now.getTime() - 100000),
-      isOwn: false,
-    },
-  ],
-};
-
 export const ChatWindow = () => {
   const { activeChatId } = useChat();
   const { focusedSlug } = useFocus();
-  const [chatMessages, setChatMessages] =
-    useState<Record<string, Message[]>>(MOCK_MESSAGES);
+  const { data: session } = useSession();
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<InputRenderable>(null);
   const scrollRef = useRef<ScrollBoxRenderable>(null);
+  const log = useLog();
 
-  const messages = useMemo(
-    () => chatMessages[activeChatId] || [],
-    [chatMessages, activeChatId]
+  // Connect to the chat room actor
+  const chatRoom = useActor({
+    name: "chatRoom",
+    key: activeChatId,
+    params: {
+      user: session?.user,
+    },
+    enabled: !!activeChatId && !!session,
+  });
+
+  // Fetch message history
+  const messagesQuery = useQuery({
+    queryKey: ["messages", activeChatId],
+    queryFn: () =>
+      chatRoom.connection?.action({
+        name: "getHistory",
+        args: [],
+      }),
+    enabled: !!chatRoom.isConnected,
+  });
+
+  // Listen for new messages and refetch
+  chatRoom.useEvent("newMessage", () => {
+    messagesQuery.refetch();
+  });
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    onMutate: () => {
+      setInputValue("");
+    },
+    mutationFn: async (text: string) => {
+      await chatRoom.connection!.action({
+        name: "sendMessage",
+        args: [text],
+      });
+    },
+    onSuccess: (response) => {
+      log.info("Message sent", response);
+      messagesQuery.refetch();
+    },
+    onError: (error, originalText) => {
+      log.error("Error sending message", error);
+      setInputValue(originalText);
+      setTimeout(() => {
+        inputRef.current?.focus(); // TODO: Focus at end of input
+        inputRef.current!.cursorPosition = originalText.length;
+      }, 0);
+    },
+  });
+
+  // Format messages for display
+  const messages: Message[] = (messagesQuery.data || []).map(
+    (msg: RivetMessage) => ({
+      id: `${msg.timestamp}`,
+      sender: msg.sender,
+      content: msg.text,
+      timestamp: new Date(msg.timestamp),
+      isOwn: msg.sender === session?.user?.id,
+    })
   );
 
   useEffect(() => {
@@ -112,70 +100,10 @@ export const ChatWindow = () => {
   }, [messages]);
 
   const handleSubmit = useCallback(() => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || !chatRoom.connection) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: "You",
-      content: inputValue,
-      timestamp: new Date(),
-      isOwn: true,
-    };
-
-    setChatMessages((prev) => ({
-      ...prev,
-      [activeChatId]: [...(prev[activeChatId] || []), newMessage],
-    }));
-    setInputValue("");
-
-    // Simulate a response after 1-2 seconds
-    setTimeout(
-      () => {
-        const responders = MOCK_USERS.filter((u) => u !== "You");
-        const randomResponder =
-          responders[Math.floor(Math.random() * responders.length)];
-        const responses = [
-          "That's interesting!",
-          "I agree with that",
-          "Makes sense to me",
-          "Good point!",
-          "Thanks for sharing!",
-          "Absolutely!",
-          "I was just thinking the same thing",
-        ];
-
-        const responseMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          sender: randomResponder,
-          content: responses[Math.floor(Math.random() * responses.length)],
-          timestamp: new Date(),
-          isOwn: false,
-        };
-
-        setChatMessages((prev) => ({
-          ...prev,
-          [activeChatId]: [...(prev[activeChatId] || []), responseMessage],
-        }));
-      },
-      1000 + Math.random() * 1000
-    );
-  }, [inputValue, activeChatId]);
-
-  const handleKeyboard = useCallback(
-    (evt: ParsedKey) => {
-      // Vim-style navigation in messages panel
-      if (focusedSlug === "messages") {
-        if (evt.name === "j") {
-          scrollRef.current?.scrollBy(3);
-        } else if (evt.name === "k") {
-          scrollRef.current?.scrollBy(-3);
-        }
-      }
-    },
-    [focusedSlug]
-  );
-
-  useKeyboard(handleKeyboard);
+    sendMessageMutation.mutate(inputValue);
+  }, [inputValue, chatRoom.connection, sendMessageMutation]);
 
   return (
     <box flexGrow={1} flexDirection="column">

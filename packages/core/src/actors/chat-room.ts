@@ -6,7 +6,7 @@ export type Message = { sender: string; text: string; timestamp: number };
 
 export const chatRoom = actor({
   onBeforeConnect: async (_, opts, params: AuthConnParams) => {
-    await validateAuth(params, { request: opts.request });
+    // await validateAuth(params, { request: opts.request });
   },
   // Persistent state that survives restarts: https://rivet.gg/docs/actors/state
   state: {

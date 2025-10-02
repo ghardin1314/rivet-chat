@@ -7,7 +7,7 @@ import { useActor } from "../lib/actors";
 import { useChat } from "../providers/chat-provider";
 import { useFocus } from "../providers/focus-provider";
 import { useKeybindings } from "../providers/keybinding-provider";
-import { useModal, CreateChatModalKey } from "../providers/modal-provider";
+import { CreateChatModalKey, useModal } from "../providers/modal-provider";
 import { Theme } from "../theme";
 import { Section } from "./section";
 
@@ -67,20 +67,24 @@ export const ChatList = () => {
     modal({ type: CreateChatModalKey, data: { onConfirm: handleCreateChat } });
   }, [modal, handleCreateChat]);
 
-  const handleNavigateChat = useCallback((key?: string) => {
-    const currentIndex = chats.data?.findIndex(
-      (chat) => chat.id === activeChatId
-    );
+  const handleNavigateChat = useCallback(
+    (key?: string) => {
+      const currentIndex = chats.data?.findIndex(
+        (chat) => chat.id === activeChatId
+      );
 
-    if (key === "j") {
-      const nextIndex = ((currentIndex ?? 0) + 1) % (chats.data?.length ?? 1);
-      setActiveChatId(chats.data?.[nextIndex].id);
-    } else if (key === "k") {
-      const prevIndex =
-        ((currentIndex ?? 0) - 1 + (chats.data?.length ?? 1)) % (chats.data?.length ?? 1);
-      setActiveChatId(chats.data?.[prevIndex].id);
-    }
-  }, [activeChatId, setActiveChatId, chats.data]);
+      if (key === "j") {
+        const nextIndex = ((currentIndex ?? 0) + 1) % (chats.data?.length ?? 1);
+        setActiveChatId(chats.data?.[nextIndex].id);
+      } else if (key === "k") {
+        const prevIndex =
+          ((currentIndex ?? 0) - 1 + (chats.data?.length ?? 1)) %
+          (chats.data?.length ?? 1);
+        setActiveChatId(chats.data?.[prevIndex].id);
+      }
+    },
+    [activeChatId, setActiveChatId, chats.data]
+  );
 
   const handleSelectChat = useCallback(() => {
     setFocusedSlug("input");
@@ -116,11 +120,14 @@ export const ChatList = () => {
     },
   ]);
 
-  log.debug("chats", { chats: chats.data });
-
   return (
     <>
-      <Section title="Chats" focusIndex={0} focusSlug="chats" width={focusedSlug === "chats" ? 40 : 25}>
+      <Section
+        title="Chats"
+        focusIndex={0}
+        focusSlug="chats"
+        width={focusedSlug === "chats" ? 40 : 25}
+      >
         <box paddingLeft={1} paddingRight={1} paddingBottom={1} gap={1}>
           {chats.data?.map((chat) => {
             const isActive = chat.id === activeChatId;
