@@ -16,10 +16,8 @@ export const HomeRoute = () => {
   const modal = useModal();
 
   const handleQuit = useCallback(() => {
-    if (focusedSlug !== "input") {
-      process.exit(0);
-    }
-  }, [focusedSlug]);
+    process.exit(0);
+  }, []);
 
   const handleHelp = useCallback(() => {
     modal({ type: HelpModalKey, data: {} });

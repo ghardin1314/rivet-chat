@@ -1,6 +1,6 @@
 import { RGBA, TextAttributes } from "@opentui/core";
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useFocus } from "../providers/focus-provider";
 import { Theme } from "../theme";
 
@@ -23,7 +23,7 @@ export const Section = ({
   flexGrow,
   flexShrink,
 }: SectionProps) => {
-  const { registerSection, unregisterSection, isFocused } = useFocus();
+  const { registerSection, unregisterSection, isFocused, setFocusedSlug } = useFocus();
 
   useEffect(() => {
     registerSection({ focusIndex, focusSlug });
@@ -31,6 +31,10 @@ export const Section = ({
   }, [focusIndex, focusSlug, registerSection, unregisterSection]);
 
   const focused = isFocused(focusSlug);
+
+  const handleMouseDown = useCallback(() => {
+    setFocusedSlug(focusSlug);
+  }, [setFocusedSlug, focusSlug]);
 
   return (
     <box
@@ -42,6 +46,7 @@ export const Section = ({
       border
       borderColor={RGBA.fromHex(focused ? Theme.borderFocused : Theme.border)}
       borderStyle="rounded"
+      onMouseDown={handleMouseDown}
     >
       <box
         flexDirection="row"

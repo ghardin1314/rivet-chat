@@ -2,6 +2,7 @@ import { InputRenderable, RGBA } from "@opentui/core";
 import { useCallback } from "react";
 import { useKeyboard } from "@opentui/react";
 import { useFocus } from "../providers/focus-provider";
+import { useDisableGlobalKeybindings } from "../providers/keybinding-provider";
 import { Theme } from "../theme";
 import { useExitPrompt } from "./exit-prompt";
 import { Section } from "./section";
@@ -19,6 +20,9 @@ export const InputArea = ({ inputRef, value, onInput, onSubmit }: InputAreaProps
     () => process.exit(0),
     () => onInput("")
   );
+
+  // Disable global (app-level) keybindings when input is focused
+  useDisableGlobalKeybindings(isFocused("input"));
 
   // Handle Ctrl+C only when this panel is focused
   const handleKeyboard = useCallback(

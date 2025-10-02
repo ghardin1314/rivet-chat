@@ -15,6 +15,7 @@ type KeyBindingContextType = {
   unregisterKeybinding: (id: string) => void;
   getVisibleKeybindings: () => Array<{ key: string; description: string }>;
   getAllActiveKeybindings: () => Array<{ key: string; description: string; category?: string }>;
+  setDisabled: (disabled: boolean) => void;
 };
 
 const KeyBindingContext = createContext<KeyBindingContextType | undefined>(
@@ -66,6 +67,7 @@ export const KeyBindingProvider = ({
   children: React.ReactNode;
 }) => {
   const actionsRef = useRef<Map<string, KeyBindingAction>>(new Map());
+  const disabledRef = useRef(false);
   const [, setVersion] = useState(0);
 
   const registerKeybinding = useCallback((action: KeyBindingAction) => {
@@ -76,6 +78,10 @@ export const KeyBindingProvider = ({
   const unregisterKeybinding = useCallback((id: string) => {
     actionsRef.current.delete(id);
     setVersion((v) => v + 1);
+  }, []);
+
+  const setDisabled = useCallback((disabled: boolean) => {
+    disabledRef.current = disabled;
   }, []);
 
   const getVisibleKeybindings = useCallback(() => {
@@ -136,6 +142,9 @@ export const KeyBindingProvider = ({
     for (const action of sortedActions) {
       if (action.active === false) continue;
 
+      // Skip global keybindings if disabled
+      if (disabledRef.current && action.category === "app") continue;
+
       for (const keyPattern of action.keys) {
         if (matchesKey(evt, keyPattern)) {
           try {
@@ -158,6 +167,7 @@ export const KeyBindingProvider = ({
         unregisterKeybinding,
         getVisibleKeybindings,
         getAllActiveKeybindings,
+        setDisabled,
       }}
     >
       {children}
@@ -226,4 +236,15 @@ export const useKeybindings = (actions: Array<Omit<KeyBindingAction, "id">>) => 
     registerKeybinding,
     unregisterKeybinding,
   ]);
+};
+
+export const useDisableGlobalKeybindings = (disabled: boolean) => {
+  const { setDisabled } = useKeybindingContext();
+
+  useEffect(() => {
+    setDisabled(disabled);
+    return () => {
+      setDisabled(false);
+    };
+  }, [disabled, setDisabled]);
 };

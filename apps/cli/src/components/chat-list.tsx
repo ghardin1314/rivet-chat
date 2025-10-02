@@ -120,7 +120,7 @@ export const ChatList = () => {
 
   return (
     <>
-      <Section title="Chats" focusIndex={0} focusSlug="chats" width={25}>
+      <Section title="Chats" focusIndex={0} focusSlug="chats" width={focusedSlug === "chats" ? 40 : 25}>
         <box paddingLeft={1} paddingRight={1} paddingBottom={1} gap={1}>
           {chats.data?.map((chat) => {
             const isActive = chat.id === activeChatId;
